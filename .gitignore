@@ -1,0 +1,7 @@
+# ignore ALL .log files
+
+
+# ignore ALL files in ANY directory named old or all files starting with word test_
+test/*
+pem_store/*
+certs/archived/*
