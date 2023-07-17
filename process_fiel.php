@@ -109,23 +109,44 @@ function return_my_cert_params($path, $file_name)
 		$subject_name = $parsed_cert['name'];
 	}
 	$pretty_subject_name = parse_my_subject_name_cert_data($valid_From, $valid_To, $subject_name);
-	//$values = array($valid_From, $valid_To, print_r($pretty_subject_name, true));
 	return $pretty_subject_name;
 }
 
 //function to read pem_store directory an build inventory of certs to display
 function create_my_cert_inventory($directory)
 {
+	$status_counters = array(0, 0, 0, 0);
 	$cert_store_nms = array();
 	$inventory = glob($directory."/*.pem");
 	foreach ($inventory as $filename) 
 	{
 		$base_name_file = basename($filename);
-		$cert_store_nms[] = [$base_name_file, humanFileSize(filesize($filename)), return_my_cert_params($directory, $base_name_file)];
+		$cert_params_tmp =  return_my_cert_params($directory, $base_name_file);
+		// We validate status of the cert and we add into counters
+		if ($cert_params_tmp['expiration'] < 0)
+		{
+			if($cert_params_tmp['expiration'] > -60)
+			{
+				// 60 days mark, status is warning (yellow cell)
+				$status_counters[2]++;
+			}
+			else
+			{
+				$status_counters[1]++;
+			}
+			
+		}
+		else
+		{
+			$status_counters[3]++;
+		}
+		$cert_store_nms[] = [$base_name_file, humanFileSize(filesize($filename)), $cert_params_tmp];
 	}
-	//first we count how many certs we have on the pem_store directory
+	//We count how many certs we have on the pem_store directory
 	$filecount = count($cert_store_nms);
-	return array("Hay $filecount e.firmas en el directorio!", $cert_store_nms);
+	$status_counters[0] = $filecount;
+	return array($status_counters, $cert_store_nms);
+	//return array("Hay $filecount e.firmas en el directorio!", $cert_store_nms);
 }
 
 //function to read certs directory and know number of certificates to process
@@ -164,8 +185,8 @@ function work_on_certs($cert_array)
 function create_my_navbar($ad_user)
 {
 	$div = 
-'			<p class="text-white my-2 mx-1">Logged as: <b>'.$ad_user.'</b></p>
-			<button class="btn btn-danger mx-2" id="logoutBTN">Logout!<i class="fas fa-sign-out-alt ms-2"></i></button>';
+'			<!--<p class="text-white my-2 mx-1">Logged as: <b>'.$ad_user.'</b></p>
+			<button class="btn btn-danger mx-2" id="logoutBTN">Logout!<i class="fas fa-sign-out-alt ms-2"></i></button>-->';
 	
 	$nav = 
 '	<span class="navbar-brand text-white">
@@ -188,6 +209,39 @@ function create_my_navbar($ad_user)
 		</div>
 	</div>'."\n";
 	return $nav;
+}
+
+//function to display "status dashboard" with cards
+function my_pem_status_dashboard($inventory, $counters)
+{
+	$html = 
+'<div class="card-group w-50 my-4">
+	<div class="card mb-3">
+		<div class="card-header text-bg-primary"><h5><b>Total e.firmas</b></h5></div>
+		<div class="card-body">
+  			<h2 class="card-text">'.$counters[0].'</h2>
+		</div>
+	</div>
+	<div class="card mb-3">
+		<div class="card-header text-bg-success"><h5><b>Vigentes</b></h5></div>
+		<div class="card-body">
+			<h2 class="card-text">'.$counters[1].'</h2>
+		</div>
+	</div>
+	<div class="card mb-3">
+		<div class="card-header text-bg-warning"><h5><b>Por expirar</b></h5></div>
+		<div class="card-body">
+			<h2 class="card-text">'.$counters[2].'</h2>
+		</div>
+	</div>
+	<div class="card mb-3">
+		<div class="card-header text-bg-danger"><h5><b>Expiradas</b></h5></div>
+		<div class="card-body">
+			<h2 class="card-text">'.$counters[3].'</h2>
+		</div>
+	</div>
+</div>'."\n";
+	return $html;
 }
 
 /*********
@@ -219,17 +273,20 @@ if (isset($_POST["stamp_action_btn"]))
 if (isset($_POST["list_inventory"])) 
 {
 	$inventory = create_my_cert_inventory('pem_store');
+	$efirma_data = $inventory[1];
+	$dashboard = my_pem_status_dashboard($efirma_data, $inventory[0]);
 	$html = 
 '<center>
 	<h3 class="my-3">Listado de e.firmas:</h3>
-	<div class="d-inline-flex align-items-center my-1 w-50">
+	'.$dashboard.'
+	<div class="d-inline-flex align-items-center my-1 w-25">
 		<i class="fa fa-search me-2" aria-hidden="true"></i><input id="myInput" type="text" placeholder="Search.." class="form-control mx-2">
 	</div>
-	<h6 class="my-3 fst-italic fw-lighter">'.$inventory[0].'</h6>
+	<!--<h6 class="my-3 fst-italic fw-lighter">'.$inventory[0][0].'</h6>-->
 	<table class="table table-sm table-striped table-hover w-75 my-4">
 		<thead class="table-dark"><tr><th>RFC</th><th>Nombre</th><th>Email</th><th>Status</th><th>Expiración</th><th>Detalles</th></tr></thead>
 		<tbody id="myTable">'."\n";
-	$efirma_data = $inventory[1];
+	
 	for($b = 0; $b < count($efirma_data); $b++)
 	{
 		$details_btn = '<button type="button" class="btn btn-info btn-sm" data-id="details_btn" data-id1="'.$efirma_data[$b][0].'"><i class="fas fa-info"></i></button>';

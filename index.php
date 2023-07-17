@@ -267,7 +267,7 @@ $(document).ready(function()
 </script>
 <footer class="footer">
 <div class="my-3">
-	<span class="text-white"><strong>Faurecia GISO</strong></span><br><span>Powered by <strong><a class="link" href="#">GIS EIT Team</a></strong><br></span>
+	<span class="text-white"><strong>Tracking de e.firmas SAT</strong></span><br><span>Powered by <strong><a class="link" href="https://github.com/LaloMedel">Eduardo MEDEL</a></strong><br></span>
 </div>
 </footer>
 </html>
