@@ -152,6 +152,17 @@ $(document).ready(function()
 		});
 	}
 
+	//To init .cer conversion (we show modal with ingress message)
+	function initail_ingress_message(cert_path)
+	{
+		var ts = moment().format(dateFormat_long);
+		console.log("Showing initial conversion msg at: "+ ts);
+		$(".modal-header").html('<h4 class="modal-title text-white" id="staticBackdropLabel" style="margin: 0 auto;"><b>Let\'s start!...</b><i class="fas fa-play ms-2"></i></h4>');
+        $(".modal-body").html('<center><pre>Coloca los archivos a agregar en el directorio: <br><b>'+cert_path+'</b></pre></center>');
+        $(".modal-footer").html('<button type="button" class="btn btn-dark" data-bs-dismiss="modal"><b>Cerrar</b><i class="fas fa-times ms-2"></i></button><button type="button" class="btn btn-success" id="modal_ingress_path_OK"><b>Continuar</b><i class="fas fa-check ms-2"></i></button>');
+        $('#infoModal').modal('show');
+	}
+
 	//To trigger .cer conversion (we show modal with validation)
 	function trigger_cert_conversion()
 	{
@@ -225,7 +236,8 @@ $(document).ready(function()
 					pem_inventory_table();
 				break;
 				case 'ingress':
-					trigger_cert_conversion();
+					//trigger_cert_conversion();
+					initail_ingress_message("C:\\xampp\\htdocs\\fiel_sat\\certs");
 				break;
 			}
 		}
@@ -244,14 +256,17 @@ $(document).ready(function()
 		}
 	});
 
+	//To proceed on the deploy of files under ingress path
+	$(document).on('click', '#modal_ingress_path_OK', function()
+	{ 
+		trigger_cert_conversion();
+	});
+		
 	//To finish the cert conversion (after approval in modal)
 	$(document).on('click', '#modal_conversion_OK', function()
 	{ 
 		complete_cert_conversion();
-	});
-
-
-	
+	});	
 	
 	//To filter results with search box on e.firma table
 	$(document).on("keyup", "#myInput", function()
